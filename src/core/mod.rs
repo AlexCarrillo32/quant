@@ -1,0 +1,18 @@
+//! Core trading engine components
+
+pub mod engine;
+pub mod order_manager;
+pub mod performance;
+pub mod risk_manager;
+pub mod signal_aggregator;
+
+pub use engine::{EngineConfig, EngineStats, TradingEngine, TradingEngineBuilder};
+pub use order_manager::{
+    CloseReason, Order, OrderManager, OrderManagerConfig, OrderManagerStats, OrderSide,
+    OrderStatus, OrderType, Position, PositionSizer, Trade,
+};
+pub use performance::{
+    CpuPinning, OrderArena, PerformanceConfig, PerformanceStats, PrecisionTimer,
+};
+pub use risk_manager::{RiskCheckResult, RiskManager, RiskManagerConfig, RiskStats, RiskViolation};
+pub use signal_aggregator::{AggregationStrategy, SignalAggregator};
