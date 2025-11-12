@@ -395,6 +395,181 @@ impl Backtester {
         position_value
     }
 
+    /// Run backtest with pre-generated signals (for Python integration)
+    ///
+    /// # Parameters
+    /// - `signals`: Pre-generated trading signals with entry prices
+    ///
+    /// # Returns
+    /// Backtest results with performance metrics
+    pub fn run_with_signals(&mut self, signals: Vec<Signal>) -> Result<BacktestResult> {
+        let mut capital = self.config.initial_capital;
+        let mut equity_curve = vec![capital];
+        let mut open_trades: HashMap<Symbol, BacktestTrade> = HashMap::new();
+        let mut closed_trades: Vec<BacktestTrade> = Vec::new();
+        let total_signals = signals.len();
+        let mut rejected_signals = 0;
+
+        // Process each signal in order
+        for (idx, signal) in signals.iter().enumerate() {
+            let current_time = SystemTime::UNIX_EPOCH + Duration::from_secs((idx as u64) * 86400);
+
+            if signal.action == SignalAction::Hold {
+                continue;
+            }
+
+            // Check if we should close existing position for this symbol
+            if let Some(mut trade) = open_trades.remove(&signal.symbol) {
+                // Close existing position
+                let exit_price = if let Some(price) = signal.target_price {
+                    self.apply_slippage(price, true)
+                } else {
+                    self.apply_slippage(trade.entry_price, true) // Use entry as fallback
+                };
+
+                let exit_commission = self.config.commission_per_trade;
+                let exit_slippage =
+                    (exit_price.value() - trade.entry_price.value()).abs() * 0.01;
+
+                trade.close(
+                    exit_price,
+                    current_time,
+                    ExitReason::SignalReverse,
+                    exit_commission,
+                    exit_slippage,
+                );
+
+                // Update capital
+                capital += trade.net_pnl.unwrap_or(0.0);
+                closed_trades.push(trade);
+            }
+
+            // Skip if action is to close but we had no position
+            if signal.action == SignalAction::Close {
+                continue;
+            }
+
+            // Get entry price from signal (use target_price as entry price)
+            let entry_price = match signal.target_price {
+                Some(price) => price,
+                None => {
+                    rejected_signals += 1;
+                    continue; // Need price to execute
+                }
+            };
+
+            // Check risk manager
+            let position_value = capital * (self.config.default_position_size_pct / 100.0);
+            let open_positions_map: HashMap<Symbol, f64> = open_trades
+                .iter()
+                .map(|(s, t)| (s.clone(), t.entry_price.value() * t.quantity.value() as f64))
+                .collect();
+
+            let risk_amount = if let Some(stop_loss) = signal.stop_loss {
+                // Calculate risk based on stop loss
+                let risk_per_share = (entry_price.value() - stop_loss.value()).abs();
+                let num_shares = (position_value / entry_price.value()).floor();
+                risk_per_share * num_shares
+            } else {
+                position_value * 0.01 // Default 1% risk
+            };
+
+            let risk_check = self.risk_manager.check_trade(
+                &signal.symbol,
+                position_value,
+                risk_amount,
+                &open_positions_map,
+                10, // max positions
+                capital,
+            );
+
+            if !matches!(risk_check, crate::core::risk_manager::RiskCheckResult::Approved) {
+                rejected_signals += 1;
+                continue;
+            }
+
+            // Calculate position size
+            let position_size = self.calculate_position_size(capital, signal);
+
+            if position_size < 1.0 {
+                continue; // Can't buy fractional shares
+            }
+
+            // Execute trade
+            let adjusted_entry = self.apply_slippage(entry_price, false);
+            let quantity = Quantity::buy(position_size as u64);
+            let commission = self.config.commission_per_trade;
+            let slippage = (adjusted_entry.value() - entry_price.value()).abs();
+
+            let trade = BacktestTrade::new(
+                signal.symbol.clone(),
+                signal.action,
+                adjusted_entry,
+                quantity,
+                current_time,
+                commission,
+                slippage,
+                signal.confidence.value(),
+            );
+
+            // Deduct capital
+            let trade_cost = adjusted_entry.value() * quantity.value() as f64 + commission;
+
+            if trade_cost > capital {
+                rejected_signals += 1;
+                continue; // Not enough capital
+            }
+
+            capital -= trade_cost;
+            open_trades.insert(signal.symbol.clone(), trade);
+
+            // Update equity curve
+            let open_positions_value: f64 = open_trades
+                .iter()
+                .map(|(_, trade)| entry_price.value() * trade.quantity.value() as f64)
+                .sum();
+
+            equity_curve.push(capital + open_positions_value);
+        }
+
+        // Close all remaining positions at last signal price
+        let final_time = SystemTime::UNIX_EPOCH +
+            Duration::from_secs((signals.len() as u64) * 86400);
+
+        for (_, mut trade) in open_trades.into_iter() {
+            // Use the trade's entry price as exit (simplified)
+            let exit_price = self.apply_slippage(trade.entry_price, true);
+
+            trade.close(
+                exit_price,
+                final_time,
+                ExitReason::EndOfData,
+                self.config.commission_per_trade,
+                0.0,
+            );
+
+            capital += trade.net_pnl.unwrap_or(0.0);
+            closed_trades.push(trade);
+        }
+
+        // Calculate metrics
+        let metrics = PerformanceMetrics::calculate(
+            &equity_curve,
+            &closed_trades,
+            self.config.initial_capital,
+            signals.len(),
+        );
+
+        Ok(BacktestResult {
+            metrics,
+            trades: closed_trades,
+            equity_curve,
+            final_capital: capital,
+            total_signals,
+            rejected_signals,
+        })
+    }
+
     /// Apply slippage to a price
     fn apply_slippage(&self, price: Price, is_exit: bool) -> Price {
         let slippage_amount = price.value() * (self.config.slippage_pct / 100.0);

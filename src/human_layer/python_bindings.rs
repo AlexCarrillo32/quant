@@ -612,6 +612,300 @@ impl PySignal {
 }
 
 // ============================================================================
+// Backtester Types
+// ============================================================================
+
+use crate::backtest::{
+    BacktestConfig as RustBacktestConfig, BacktestReport as RustBacktestReport,
+    BacktestResult as RustBacktestResult, Backtester as RustBacktester,
+    PerformanceMetrics as RustMetrics,
+};
+use chrono::{DateTime, NaiveDate, TimeZone, Utc};
+
+/// Backtester configuration
+///
+/// Examples:
+///     >>> config = BacktestConfig()
+///     >>> config.initial_capital = 100000.0
+///     >>> config.commission_per_trade = 1.0
+#[pyclass(name = "BacktestConfig")]
+#[derive(Clone)]
+pub struct PyBacktestConfig {
+    inner: RustBacktestConfig,
+}
+
+#[pymethods]
+impl PyBacktestConfig {
+    /// Create new backtest config with defaults
+    #[new]
+    fn new() -> Self {
+        PyBacktestConfig {
+            inner: RustBacktestConfig::default(),
+        }
+    }
+
+    /// Get/set initial capital
+    #[getter]
+    fn initial_capital(&self) -> f64 {
+        self.inner.initial_capital
+    }
+
+    #[setter]
+    fn set_initial_capital(&mut self, value: f64) {
+        self.inner.initial_capital = value;
+    }
+
+    /// Get/set commission per trade
+    #[getter]
+    fn commission_per_trade(&self) -> f64 {
+        self.inner.commission_per_trade
+    }
+
+    #[setter]
+    fn set_commission_per_trade(&mut self, value: f64) {
+        self.inner.commission_per_trade = value;
+    }
+
+    /// Get/set slippage (%)
+    #[getter]
+    fn slippage_pct(&self) -> f64 {
+        self.inner.slippage_pct
+    }
+
+    #[setter]
+    fn set_slippage_pct(&mut self, value: f64) {
+        self.inner.slippage_pct = value;
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "BacktestConfig(capital=${:.2}, commission=${:.2}, slippage={:.2}%)",
+            self.inner.initial_capital, self.inner.commission_per_trade, self.inner.slippage_pct
+        )
+    }
+}
+
+/// Performance metrics from backtest
+///
+/// Examples:
+///     >>> metrics = result.metrics()
+///     >>> print(f"Sharpe: {metrics.sharpe_ratio()}")
+#[pyclass(name = "PerformanceMetrics")]
+#[derive(Clone)]
+pub struct PyPerformanceMetrics {
+    inner: RustMetrics,
+}
+
+#[pymethods]
+impl PyPerformanceMetrics {
+    /// Total return (%)
+    fn total_return_pct(&self) -> f64 {
+        self.inner.total_return_pct
+    }
+
+    /// Annual return (%)
+    fn annual_return_pct(&self) -> f64 {
+        self.inner.annual_return_pct
+    }
+
+    /// Sharpe ratio
+    fn sharpe_ratio(&self) -> f64 {
+        self.inner.sharpe_ratio
+    }
+
+    /// Sortino ratio
+    fn sortino_ratio(&self) -> f64 {
+        self.inner.sortino_ratio
+    }
+
+    /// Maximum drawdown (%)
+    fn max_drawdown_pct(&self) -> f64 {
+        self.inner.max_drawdown_pct
+    }
+
+    /// Win rate (0.0 to 1.0)
+    fn win_rate(&self) -> f64 {
+        self.inner.win_rate
+    }
+
+    /// Total number of trades
+    fn total_trades(&self) -> usize {
+        self.inner.total_trades
+    }
+
+    /// Number of winning trades
+    fn winning_trades(&self) -> usize {
+        self.inner.winning_trades
+    }
+
+    /// Number of losing trades
+    fn losing_trades(&self) -> usize {
+        self.inner.losing_trades
+    }
+
+    /// Average win ($)
+    fn avg_win(&self) -> f64 {
+        self.inner.avg_win
+    }
+
+    /// Average loss ($)
+    fn avg_loss(&self) -> f64 {
+        self.inner.avg_loss
+    }
+
+    /// Profit factor (total wins / total losses)
+    fn profit_factor(&self) -> f64 {
+        self.inner.profit_factor
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "PerformanceMetrics(return={:.2}%, sharpe={:.2}, max_dd={:.2}%, win_rate={:.1}%)",
+            self.inner.total_return_pct,
+            self.inner.sharpe_ratio,
+            self.inner.max_drawdown_pct,
+            self.inner.win_rate * 100.0
+        )
+    }
+
+    fn __str__(&self) -> String {
+        format!(
+            "Total Return: {:.2}%\n\
+             Annual Return: {:.2}%\n\
+             Sharpe Ratio: {:.2}\n\
+             Sortino Ratio: {:.2}\n\
+             Max Drawdown: {:.2}%\n\
+             Win Rate: {:.1}%\n\
+             Total Trades: {}\n\
+             Profit Factor: {:.2}",
+            self.inner.total_return_pct,
+            self.inner.annual_return_pct,
+            self.inner.sharpe_ratio,
+            self.inner.sortino_ratio,
+            self.inner.max_drawdown_pct,
+            self.inner.win_rate * 100.0,
+            self.inner.total_trades,
+            self.inner.profit_factor
+        )
+    }
+}
+
+/// Backtest result
+///
+/// Examples:
+///     >>> result = backtester.run(signals, start_date, end_date)
+///     >>> print(result.metrics())
+///     >>> print(f"Final value: ${result.final_portfolio_value()}")
+#[pyclass(name = "BacktestResult")]
+pub struct PyBacktestResult {
+    inner: RustBacktestResult,
+}
+
+#[pymethods]
+impl PyBacktestResult {
+    /// Get performance metrics
+    fn metrics(&self) -> PyPerformanceMetrics {
+        PyPerformanceMetrics {
+            inner: self.inner.metrics.clone(),
+        }
+    }
+
+    /// Final portfolio value
+    fn final_portfolio_value(&self) -> f64 {
+        self.inner.final_capital
+    }
+
+    /// Number of trades executed
+    fn total_trades(&self) -> usize {
+        self.inner.trades.len()
+    }
+
+    /// Get report summary
+    fn summary(&self) -> String {
+        format!(
+            "Backtest Results:\n\
+             Final Value: ${:.2}\n\
+             Total Trades: {}\n\
+             {}",
+            self.inner.final_capital,
+            self.inner.trades.len(),
+            self.metrics().__str__()
+        )
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "BacktestResult(final_value=${:.2}, trades={})",
+            self.inner.final_capital,
+            self.inner.trades.len()
+        )
+    }
+}
+
+/// Backtester - Test strategies on historical data
+///
+/// Examples:
+///     >>> backtester = Backtester(initial_capital=100000.0)
+///     >>> signals = [signal1, signal2, signal3]
+///     >>> result = backtester.run(signals)
+///     >>> print(result.metrics())
+#[pyclass(name = "Backtester")]
+pub struct PyBacktester {
+    inner: RustBacktester,
+}
+
+#[pymethods]
+impl PyBacktester {
+    /// Create new backtester
+    ///
+    /// Args:
+    ///     initial_capital (float): Starting capital (default: 10000.0)
+    ///     commission (float): Commission per trade (default: 0.0)
+    ///     slippage (float): Slippage % (default: 0.1)
+    #[new]
+    #[pyo3(signature = (initial_capital=10000.0, commission=0.0, slippage=0.1))]
+    fn new(initial_capital: f64, commission: f64, slippage: f64) -> Self {
+        let config = RustBacktestConfig {
+            initial_capital,
+            commission_per_trade: commission,
+            slippage_pct: slippage,
+            ..Default::default()
+        };
+
+        PyBacktester {
+            inner: RustBacktester::new(config),
+        }
+    }
+
+    /// Run backtest with list of signals
+    ///
+    /// Args:
+    ///     signals: List of Signal objects to backtest
+    ///
+    /// Returns:
+    ///     BacktestResult with performance metrics
+    fn run(&mut self, signals: Vec<PySignal>) -> PyResult<PyBacktestResult> {
+        // Convert Python signals to Rust signals
+        let rust_signals: Vec<RustSignal> = signals.iter().map(|s| s.to_rust()).collect();
+
+        // Run backtest
+        let result = self
+            .inner
+            .run_with_signals(rust_signals)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+
+        Ok(PyBacktestResult { inner: result })
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "Backtester(capital=${:.2})",
+            self.inner.config.initial_capital
+        )
+    }
+}
+
+// ============================================================================
 // Module Registration
 // ============================================================================
 
@@ -620,13 +914,19 @@ impl PySignal {
 /// This is called when Python imports the module
 #[pymodule]
 fn quant_engine(_py: Python, m: &PyModule) -> PyResult<()> {
-    // Register types
+    // Register core types
     m.add_class::<PyPrice>()?;
     m.add_class::<PyQuantity>()?;
     m.add_class::<PySymbol>()?;
     m.add_class::<PySignalAction>()?;
     m.add_class::<PyConfidence>()?;
     m.add_class::<PySignal>()?;
+
+    // Register backtesting types
+    m.add_class::<PyBacktestConfig>()?;
+    m.add_class::<PyPerformanceMetrics>()?;
+    m.add_class::<PyBacktestResult>()?;
+    m.add_class::<PyBacktester>()?;
 
     // Module metadata
     m.add("__version__", "0.1.0")?;
