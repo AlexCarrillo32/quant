@@ -149,7 +149,8 @@ impl std::fmt::Display for RiskViolation {
 /// - Correlation exposure tracking
 /// - Loss streak detection
 pub struct RiskManager {
-    config: RiskManagerConfig,
+    /// Risk management configuration
+    pub config: RiskManagerConfig,
 
     /// Starting portfolio value for the day
     day_start_value: f64,
