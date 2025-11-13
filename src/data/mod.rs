@@ -7,8 +7,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 
+pub mod cache;
 pub mod yahoo;
 
+pub use cache::{CachedDataProvider, CacheConfig, CacheStats};
 pub use yahoo::YahooFinanceProvider;
 
 /// Market data provider trait
