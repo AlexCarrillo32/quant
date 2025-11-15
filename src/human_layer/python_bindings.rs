@@ -395,8 +395,7 @@ impl PyConfidence {
     ///     ValueError: If value is not in [0.0, 1.0] range
     #[new]
     fn new(value: f64) -> PyResult<Self> {
-        let conf =
-            RustConfidence::new(value).map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let conf = RustConfidence::new(value).map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(PyConfidence { inner: conf })
     }
 
@@ -930,7 +929,10 @@ fn quant_engine(_py: Python, m: &PyModule) -> PyResult<()> {
 
     // Module metadata
     m.add("__version__", "0.1.0")?;
-    m.add("__doc__", "High-performance quant trading engine with human intuition layer")?;
+    m.add(
+        "__doc__",
+        "High-performance quant trading engine with human intuition layer",
+    )?;
 
     Ok(())
 }

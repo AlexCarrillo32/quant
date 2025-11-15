@@ -37,7 +37,8 @@ pub struct PanicDetectorAlpha {
     // Thresholds (calibrated from historical data)
     vix_panic_threshold: f64,      // VIX > 30 = fear
     put_call_panic_threshold: f64, // P/C > 1.5 = protection buying
-    volume_surge_threshold: f64,   // Volume > 2x avg = panic
+    #[allow(dead_code)]
+    volume_surge_threshold: f64,   // Volume > 2x avg = panic (for future enhancement)
 
     // State
     stats: AlphaStats,

@@ -34,10 +34,10 @@
 //! - **Together**: Optimal AND safe
 
 use crate::core::{
-    KellyConfig, KellyCriterion, PositionSummary, RiskCheckResult, RiskManager,
-    RiskManagerConfig, RiskViolation, SizingMethod,
+    KellyConfig, KellyCriterion, RiskCheckResult, RiskManager, RiskManagerConfig, RiskViolation,
+    SizingMethod,
 };
-use crate::types::{Confidence, Price, Quantity, Signal, Symbol};
+use crate::types::{Price, Signal, Symbol};
 use std::collections::HashMap;
 
 /// Integrated position sizer combining Kelly + Risk
@@ -154,8 +154,7 @@ impl IntegratedPositionSizer {
 
                         // Recalculate position to fit max risk
                         let adjusted_quantity = if let Some(stop_loss) = signal.stop_loss {
-                            let risk_per_share =
-                                (current_price.value() - stop_loss.value()).abs();
+                            let risk_per_share = (current_price.value() - stop_loss.value()).abs();
                             if risk_per_share > 0.0 {
                                 (max_risk_amount / risk_per_share).floor() as u64
                             } else {
@@ -296,7 +295,7 @@ impl std::fmt::Display for PositionSizeDecision {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::SignalAction;
+    use crate::types::{Confidence, SignalAction};
 
     fn create_test_signal(
         symbol: &str,
@@ -373,11 +372,7 @@ mod tests {
             ..Default::default()
         };
 
-        let mut sizer = IntegratedPositionSizer::new(
-            KellyConfig::default(),
-            config,
-            10_000.0,
-        );
+        let mut sizer = IntegratedPositionSizer::new(KellyConfig::default(), config, 10_000.0);
 
         // Simulate portfolio dropping 6% (exceeds 5% limit)
         sizer.update_portfolio(9_400.0);
@@ -429,11 +424,7 @@ mod tests {
             ..Default::default()
         };
 
-        let mut sizer = IntegratedPositionSizer::new(
-            KellyConfig::default(),
-            config,
-            10_000.0,
-        );
+        let mut sizer = IntegratedPositionSizer::new(KellyConfig::default(), config, 10_000.0);
 
         // Record 3 consecutive losses
         sizer.record_trade(-50.0);

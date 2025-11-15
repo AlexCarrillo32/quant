@@ -44,6 +44,7 @@ pub enum CreativeSignalType {
 
 /// Weather conditions
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(dead_code)] // Part of future creative alpha implementation
 pub enum WeatherCondition {
     /// Severe weather (storms, snow)
     Severe,
@@ -58,18 +59,20 @@ pub enum WeatherCondition {
 impl WeatherCondition {
     /// Get impact score for retail (-1.0 to 1.0)
     /// Bad weather = positive for online, negative for physical retail
+    #[allow(dead_code)] // Part of future creative alpha implementation
     fn retail_impact(&self) -> f64 {
         match self {
-            WeatherCondition::Severe => 0.8,   // Strong online shopping
-            WeatherCondition::Bad => 0.4,      // Moderate online shopping
-            WeatherCondition::Normal => 0.0,   // Neutral
-            WeatherCondition::Good => -0.3,    // People go outside, less online
+            WeatherCondition::Severe => 0.8, // Strong online shopping
+            WeatherCondition::Bad => 0.4,    // Moderate online shopping
+            WeatherCondition::Normal => 0.0, // Neutral
+            WeatherCondition::Good => -0.3,  // People go outside, less online
         }
     }
 }
 
 /// Earnings surprise magnitude
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(dead_code)] // Part of future creative alpha implementation
 pub enum SurpriseMagnitude {
     /// Major beat (>10% above estimates)
     MajorBeat,
@@ -84,7 +87,8 @@ pub enum SurpriseMagnitude {
 }
 
 impl SurpriseMagnitude {
-    fn score(&self) -> f64 {
+    #[allow(dead_code)] // Part of future creative alpha implementation
+    fn to_score(&self) -> f64 {
         match self {
             SurpriseMagnitude::MajorBeat => 1.0,
             SurpriseMagnitude::Beat => 0.5,
@@ -134,9 +138,9 @@ pub struct CreativeSynthesisAlpha {
     patterns: HashMap<Symbol, Vec<PatternTracker>>,
 
     // Configuration
-    min_pattern_strength: f64,  // Minimum strength to act (default: 0.5)
-    min_confidence: f64,         // Minimum confidence (default: 0.55)
-    require_multiple: bool,      // Require multiple patterns to align (default: true)
+    min_pattern_strength: f64, // Minimum strength to act (default: 0.5)
+    min_confidence: f64,       // Minimum confidence (default: 0.55)
+    require_multiple: bool,    // Require multiple patterns to align (default: true)
 
     // State
     stats: AlphaStats,
@@ -173,7 +177,7 @@ impl CreativeSynthesisAlpha {
         confidence: f64,
     ) {
         let tracker = PatternTracker::new(pattern_type, strength, confidence);
-        self.patterns.entry(symbol).or_insert_with(Vec::new).push(tracker);
+        self.patterns.entry(symbol).or_default().push(tracker);
     }
 
     /// Simulate weather-based retail signal
@@ -204,7 +208,7 @@ impl CreativeSynthesisAlpha {
 
                 return Some(PatternTracker::new(
                     CreativeSignalType::EarningsSurprise,
-                    strength * surprise.score().abs(),
+                    strength * surprise.to_score().abs(),
                     confidence,
                 ));
             }
@@ -251,7 +255,8 @@ impl CreativeSynthesisAlpha {
         }
 
         // Average confidence, boosted if multiple patterns align
-        let avg_confidence = patterns.iter().map(|p| p.confidence).sum::<f64>() / patterns.len() as f64;
+        let avg_confidence =
+            patterns.iter().map(|p| p.confidence).sum::<f64>() / patterns.len() as f64;
 
         // Boost if multiple independent patterns agree
         let boost = if patterns.len() > 1 {
@@ -295,21 +300,27 @@ impl CreativeSynthesisAlpha {
 
         // Check for weather-retail pattern
         if let Some(pattern) = self.check_weather_retail(&symbol) {
-            if pattern.strength >= self.min_pattern_strength && pattern.confidence >= self.min_confidence {
+            if pattern.strength >= self.min_pattern_strength
+                && pattern.confidence >= self.min_confidence
+            {
                 active_patterns.push(pattern);
             }
         }
 
         // Check for earnings spillover
         if let Some(pattern) = self.check_earnings_spillover(data) {
-            if pattern.strength >= self.min_pattern_strength && pattern.confidence >= self.min_confidence {
+            if pattern.strength >= self.min_pattern_strength
+                && pattern.confidence >= self.min_confidence
+            {
                 active_patterns.push(pattern);
             }
         }
 
         // Check for search trends
         if let Some(pattern) = self.check_search_trends(data) {
-            if pattern.strength >= self.min_pattern_strength && pattern.confidence >= self.min_confidence {
+            if pattern.strength >= self.min_pattern_strength
+                && pattern.confidence >= self.min_confidence
+            {
                 active_patterns.push(pattern);
             }
         }
@@ -453,20 +464,16 @@ mod tests {
 
     #[test]
     fn test_surprise_score() {
-        assert_eq!(SurpriseMagnitude::MajorBeat.score(), 1.0);
-        assert_eq!(SurpriseMagnitude::Beat.score(), 0.5);
-        assert_eq!(SurpriseMagnitude::Inline.score(), 0.0);
-        assert_eq!(SurpriseMagnitude::Miss.score(), -0.5);
-        assert_eq!(SurpriseMagnitude::MajorMiss.score(), -1.0);
+        assert_eq!(SurpriseMagnitude::MajorBeat.to_score(), 1.0);
+        assert_eq!(SurpriseMagnitude::Beat.to_score(), 0.5);
+        assert_eq!(SurpriseMagnitude::Inline.to_score(), 0.0);
+        assert_eq!(SurpriseMagnitude::Miss.to_score(), -0.5);
+        assert_eq!(SurpriseMagnitude::MajorMiss.to_score(), -1.0);
     }
 
     #[test]
     fn test_pattern_tracker() {
-        let pattern = PatternTracker::new(
-            CreativeSignalType::Weather,
-            0.8,
-            0.7,
-        );
+        let pattern = PatternTracker::new(CreativeSignalType::Weather, 0.8, 0.7);
 
         assert_eq!(pattern.pattern_type, CreativeSignalType::Weather);
         assert_eq!(pattern.strength, 0.8);
@@ -479,12 +486,7 @@ mod tests {
         let mut alpha = CreativeSynthesisAlpha::new();
         let symbol = Symbol::new("AMZN").unwrap();
 
-        alpha.add_pattern(
-            symbol.clone(),
-            CreativeSignalType::Weather,
-            0.8,
-            0.7,
-        );
+        alpha.add_pattern(symbol.clone(), CreativeSignalType::Weather, 0.8, 0.7);
 
         assert!(alpha.patterns.contains_key(&symbol));
         assert_eq!(alpha.patterns.get(&symbol).unwrap().len(), 1);
@@ -511,18 +513,14 @@ mod tests {
         let alpha = CreativeSynthesisAlpha::new();
 
         // Strong positive patterns
-        let positive_patterns = vec![
-            PatternTracker::new(CreativeSignalType::Weather, 0.6, 0.7),
-        ];
+        let positive_patterns = vec![PatternTracker::new(CreativeSignalType::Weather, 0.6, 0.7)];
         assert_eq!(
             alpha.patterns_to_signal(&positive_patterns),
             Some(SignalAction::Buy)
         );
 
         // Strong negative patterns
-        let negative_patterns = vec![
-            PatternTracker::new(CreativeSignalType::Weather, -0.6, 0.7),
-        ];
+        let negative_patterns = vec![PatternTracker::new(CreativeSignalType::Weather, -0.6, 0.7)];
         assert_eq!(
             alpha.patterns_to_signal(&negative_patterns),
             Some(SignalAction::Sell)

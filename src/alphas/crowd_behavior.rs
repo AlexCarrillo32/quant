@@ -125,7 +125,8 @@ impl CrowdTracker {
 
         // Keep last 14 days of history
         let cutoff = now - Duration::days(14);
-        self.mention_history.retain(|(timestamp, _)| *timestamp > cutoff);
+        self.mention_history
+            .retain(|(timestamp, _)| *timestamp > cutoff);
 
         // Update current state
         self.mention_count = mentions;
@@ -150,19 +151,23 @@ impl CrowdTracker {
         let recent_count = (self.mention_history.len() / 2).max(1);
         let older_count = recent_count;
 
-        let recent_avg = self.mention_history
+        let recent_avg = self
+            .mention_history
             .iter()
             .rev()
             .take(recent_count)
             .map(|(_, count)| *count as f64)
-            .sum::<f64>() / recent_count as f64;
+            .sum::<f64>()
+            / recent_count as f64;
 
-        let older_avg = self.mention_history
+        let older_avg = self
+            .mention_history
             .iter()
             .skip(self.mention_history.len() - older_count - recent_count)
             .take(older_count)
             .map(|(_, count)| *count as f64)
-            .sum::<f64>() / older_count as f64;
+            .sum::<f64>()
+            / older_count as f64;
 
         let mention_growth = if older_avg > 0.0 {
             (recent_avg - older_avg) / older_avg
@@ -220,8 +225,8 @@ impl CrowdTracker {
         // Meme stage influences emotion
         match self.stage {
             MemeStage::Acceleration => score += 0.5, // FOMO building
-            MemeStage::Peak => score += 1.0,          // Maximum FOMO
-            MemeStage::Decline => score -= 0.5,       // Fear setting in
+            MemeStage::Peak => score += 1.0,         // Maximum FOMO
+            MemeStage::Decline => score -= 0.5,      // Fear setting in
             _ => {}
         }
 
@@ -237,10 +242,13 @@ pub struct CrowdBehaviorAlpha {
     // Track crowd behavior per symbol
     trackers: HashMap<Symbol, CrowdTracker>,
 
-    // Configuration
-    fomo_threshold: f64,        // Emotion score for FOMO (default: 1.5)
-    panic_threshold: f64,       // Emotion score for panic (default: -1.5)
-    min_confidence: f64,        // Minimum confidence to trade (default: 0.6)
+    // Configuration (used for future enhancements)
+    #[allow(dead_code)]
+    fomo_threshold: f64,         // Emotion score for FOMO (default: 1.5)
+    #[allow(dead_code)]
+    panic_threshold: f64,        // Emotion score for panic (default: -1.5)
+    min_confidence: f64,         // Minimum confidence to trade (default: 0.6)
+    #[allow(dead_code)]
     avg_volume_window_days: i64, // Days to calculate avg volume (default: 20)
 
     // State
@@ -272,7 +280,10 @@ impl CrowdBehaviorAlpha {
 
     /// Update social media mentions (in production, fetch from Reddit/Twitter)
     pub fn update_mentions(&mut self, symbol: Symbol, mentions: usize) {
-        let tracker = self.trackers.entry(symbol).or_insert_with(CrowdTracker::new);
+        let tracker = self
+            .trackers
+            .entry(symbol)
+            .or_insert_with(CrowdTracker::new);
         // This would be called when new social media data is available
         // For now, it's a placeholder for future integration
         tracker.mention_count = mentions;
@@ -298,7 +309,7 @@ impl CrowdBehaviorAlpha {
 
         // Certain stages are more predictable
         match tracker.stage {
-            MemeStage::Peak => confidence += 0.2,    // Peak FOMO very predictable
+            MemeStage::Peak => confidence += 0.2, // Peak FOMO very predictable
             MemeStage::Decline => confidence += 0.15, // Panic also predictable
             MemeStage::Acceleration => confidence += 0.1,
             _ => {}
@@ -347,7 +358,10 @@ impl CrowdBehaviorAlpha {
 
         // Get or create tracker
         let symbol = data.symbol.clone();
-        let tracker = self.trackers.entry(symbol.clone()).or_insert_with(CrowdTracker::new);
+        let tracker = self
+            .trackers
+            .entry(symbol.clone())
+            .or_insert_with(CrowdTracker::new);
 
         // Calculate volume surge
         // In production, would compare to 20-day average volume
@@ -378,8 +392,8 @@ impl CrowdBehaviorAlpha {
         let emotion = tracker.emotion;
         let tracker_clone = tracker.clone();
 
-        // Drop the mutable borrow
-        drop(tracker);
+        // Drop the mutable borrow (using let _ instead of drop for reference)
+        let _ = tracker;
 
         // Now we can call methods on self
         let confidence_value = self.calculate_confidence(&tracker_clone);
@@ -548,7 +562,10 @@ mod tests {
         tracker.update(90, 1.0, -8.0);
 
         // Should have negative emotion from strong down momentum
-        assert!(tracker.emotion.score() < 0.0, "Expected negative emotion from down momentum");
+        assert!(
+            tracker.emotion.score() < 0.0,
+            "Expected negative emotion from down momentum"
+        );
     }
 
     #[test]

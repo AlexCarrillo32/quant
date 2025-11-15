@@ -13,7 +13,7 @@ pub mod types;
 
 // Re-export commonly used types
 pub use alphas::{AlphaModel, AlphaSignal};
-pub use backtest::{Backtester, BacktestConfig, BacktestReport, PerformanceMetrics};
+pub use backtest::{BacktestConfig, BacktestReport, Backtester, PerformanceMetrics};
 pub use core::TradingEngine;
 pub use types::{Confidence, MarketData, Price, Quantity, Signal, SignalAction};
 

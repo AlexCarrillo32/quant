@@ -132,7 +132,8 @@ impl CacheStats {
 
     /// Overall hit rate
     pub fn overall_hit_rate(&self) -> f64 {
-        let total = self.quote_hits + self.quote_misses + self.historical_hits + self.historical_misses;
+        let total =
+            self.quote_hits + self.quote_misses + self.historical_hits + self.historical_misses;
         let hits = self.quote_hits + self.historical_hits;
         if total == 0 {
             0.0
@@ -235,12 +236,13 @@ impl<T: DataProvider> CachedDataProvider<T> {
     }
 
     /// Generate cache key for historical data
-    fn historical_cache_key(
-        symbol: &Symbol,
-        start: &DateTime<Utc>,
-        end: &DateTime<Utc>,
-    ) -> String {
-        format!("{}:{}:{}", symbol.as_str(), start.timestamp(), end.timestamp())
+    fn historical_cache_key(symbol: &Symbol, start: &DateTime<Utc>, end: &DateTime<Utc>) -> String {
+        format!(
+            "{}:{}:{}",
+            symbol.as_str(),
+            start.timestamp(),
+            end.timestamp()
+        )
     }
 }
 

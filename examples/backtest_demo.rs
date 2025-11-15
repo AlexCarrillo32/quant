@@ -7,16 +7,16 @@
 //! - Performance analysis
 //! - Report generation
 
+use chrono::Utc;
 use quant_engine::{
     alphas::PanicDetectorAlpha,
-    backtest::{Backtester, BacktestConfig, BacktestReport},
+    backtest::{BacktestConfig, BacktestReport, Backtester},
     core::risk_manager::RiskManagerConfig,
     core::signal_aggregator::AggregationStrategy,
     types::*,
 };
-use std::collections::HashMap;
-use chrono::Utc;
 use rand::Rng;
+use std::collections::HashMap;
 
 fn main() {
     println!("╔══════════════════════════════════════════════════════════════╗");
@@ -32,7 +32,11 @@ fn main() {
     ];
 
     let historical_data = generate_synthetic_data(&symbols, 252); // 1 year of daily data
-    println!("   ✓ Generated {} days of data for {} symbols\n", 252, symbols.len());
+    println!(
+        "   ✓ Generated {} days of data for {} symbols\n",
+        252,
+        symbols.len()
+    );
 
     // Configure backtest
     println!("⚙️  Configuring backtester...");
@@ -53,9 +57,15 @@ fn main() {
     };
 
     println!("   ✓ Initial Capital: ${:.2}", config.initial_capital);
-    println!("   ✓ Commission: ${:.2} per trade", config.commission_per_trade);
+    println!(
+        "   ✓ Commission: ${:.2} per trade",
+        config.commission_per_trade
+    );
     println!("   ✓ Slippage: {:.3}%", config.slippage_pct);
-    println!("   ✓ Position Size: {:.1}% of capital\n", config.default_position_size_pct);
+    println!(
+        "   ✓ Position Size: {:.1}% of capital\n",
+        config.default_position_size_pct
+    );
 
     // Create backtester and add alpha models
     println!("🧠 Adding alpha models...");
@@ -79,13 +89,31 @@ fn main() {
             println!("╚══════════════════════════════════════════════════════════════╝");
             println!("  Initial Capital:    ${:>12.2}", 100_000.0);
             println!("  Final Capital:      ${:>12.2}", result.final_capital);
-            println!("  P/L:                ${:>12.2}", result.final_capital - 100_000.0);
-            println!("  Total Return:       {:>12.2}%", result.metrics.total_return_pct);
-            println!("  Sharpe Ratio:       {:>12.2}", result.metrics.sharpe_ratio);
-            println!("  Max Drawdown:       {:>12.2}%", result.metrics.max_drawdown_pct);
+            println!(
+                "  P/L:                ${:>12.2}",
+                result.final_capital - 100_000.0
+            );
+            println!(
+                "  Total Return:       {:>12.2}%",
+                result.metrics.total_return_pct
+            );
+            println!(
+                "  Sharpe Ratio:       {:>12.2}",
+                result.metrics.sharpe_ratio
+            );
+            println!(
+                "  Max Drawdown:       {:>12.2}%",
+                result.metrics.max_drawdown_pct
+            );
             println!("  Total Trades:       {:>12}", result.trades.len());
-            println!("  Win Rate:           {:>12.2}%", result.metrics.trade_stats.win_rate_pct);
-            println!("  Profit Factor:      {:>12.2}", result.metrics.trade_stats.profit_factor);
+            println!(
+                "  Win Rate:           {:>12.2}%",
+                result.metrics.trade_stats.win_rate_pct
+            );
+            println!(
+                "  Profit Factor:      {:>12.2}",
+                result.metrics.trade_stats.profit_factor
+            );
             println!("  Strategy Grade:     {:>12}", result.metrics.grade());
             println!();
 
@@ -98,11 +126,16 @@ fn main() {
             println!("║                  SIGNAL ANALYSIS                             ║");
             println!("╚══════════════════════════════════════════════════════════════╝");
             println!("  Total Signals Generated:  {:>8}", result.total_signals);
-            println!("  Signals Accepted:         {:>8}", result.total_signals - result.rejected_signals);
+            println!(
+                "  Signals Accepted:         {:>8}",
+                result.total_signals - result.rejected_signals
+            );
             println!("  Signals Rejected:         {:>8}", result.rejected_signals);
 
             let acceptance_rate = if result.total_signals > 0 {
-                ((result.total_signals - result.rejected_signals) as f64 / result.total_signals as f64) * 100.0
+                ((result.total_signals - result.rejected_signals) as f64
+                    / result.total_signals as f64)
+                    * 100.0
             } else {
                 0.0
             };
@@ -153,10 +186,7 @@ fn main() {
 }
 
 /// Generate synthetic market data for testing
-fn generate_synthetic_data(
-    symbols: &[Symbol],
-    days: usize,
-) -> HashMap<Symbol, Vec<MarketData>> {
+fn generate_synthetic_data(symbols: &[Symbol], days: usize) -> HashMap<Symbol, Vec<MarketData>> {
     let mut rng = rand::rng();
     let mut data = HashMap::new();
 

@@ -14,7 +14,7 @@ pub mod metrics;
 pub mod report;
 pub mod trade;
 
-pub use engine::{Backtester, BacktestConfig, BacktestResult};
+pub use engine::{BacktestConfig, BacktestResult, Backtester};
 pub use metrics::{PerformanceMetrics, TradeStatistics};
 pub use report::BacktestReport;
 pub use trade::{BacktestTrade, TradeOutcome};

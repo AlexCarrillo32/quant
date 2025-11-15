@@ -12,11 +12,11 @@ use crate::alphas::AlphaModel;
 use crate::backtest::metrics::PerformanceMetrics;
 use crate::backtest::trade::{BacktestTrade, ExitReason};
 use crate::core::risk_manager::{RiskManager, RiskManagerConfig};
-use crate::core::signal_aggregator::{SignalAggregator, AggregationStrategy};
+use crate::core::signal_aggregator::{AggregationStrategy, SignalAggregator};
 use crate::types::*;
 use anyhow::{Context, Result};
 use std::collections::HashMap;
-use std::time::{SystemTime, Duration};
+use std::time::{Duration, SystemTime};
 
 /// Backtesting configuration
 #[derive(Debug, Clone)]
@@ -147,7 +147,9 @@ impl Backtester {
             for symbol in symbols {
                 if let Some(data) = historical_data.get(symbol) {
                     if let Some(market_data) = data.get(i) {
-                        market_snapshot.data.insert(symbol.clone(), market_data.clone());
+                        market_snapshot
+                            .data
+                            .insert(symbol.clone(), market_data.clone());
                     }
                 }
             }
@@ -194,7 +196,8 @@ impl Backtester {
             }
 
             // Remove closed trades
-            let closed: Vec<_> = open_trades.iter()
+            let closed: Vec<_> = open_trades
+                .iter()
                 .filter(|(_, t)| !t.is_open())
                 .map(|(k, _)| k.clone())
                 .collect();
@@ -237,7 +240,10 @@ impl Backtester {
                     capital,
                 );
 
-                if !matches!(risk_check, crate::core::risk_manager::RiskCheckResult::Approved) {
+                if !matches!(
+                    risk_check,
+                    crate::core::risk_manager::RiskCheckResult::Approved
+                ) {
                     rejected_signals += 1;
                     continue;
                 }
@@ -344,13 +350,17 @@ impl Backtester {
         let stop_loss_pct = 2.0;
         match trade.action {
             SignalAction::Buy => {
-                let loss_pct = ((current_price.value() - trade.entry_price.value()) / trade.entry_price.value()) * 100.0;
+                let loss_pct = ((current_price.value() - trade.entry_price.value())
+                    / trade.entry_price.value())
+                    * 100.0;
                 if loss_pct < -stop_loss_pct {
                     return Some(ExitReason::StopLoss);
                 }
             }
             SignalAction::Sell => {
-                let loss_pct = ((trade.entry_price.value() - current_price.value()) / trade.entry_price.value()) * 100.0;
+                let loss_pct = ((trade.entry_price.value() - current_price.value())
+                    / trade.entry_price.value())
+                    * 100.0;
                 if loss_pct < -stop_loss_pct {
                     return Some(ExitReason::StopLoss);
                 }
@@ -362,13 +372,17 @@ impl Backtester {
         let take_profit_pct = 4.0;
         match trade.action {
             SignalAction::Buy => {
-                let profit_pct = ((current_price.value() - trade.entry_price.value()) / trade.entry_price.value()) * 100.0;
+                let profit_pct = ((current_price.value() - trade.entry_price.value())
+                    / trade.entry_price.value())
+                    * 100.0;
                 if profit_pct > take_profit_pct {
                     return Some(ExitReason::TakeProfit);
                 }
             }
             SignalAction::Sell => {
-                let profit_pct = ((trade.entry_price.value() - current_price.value()) / trade.entry_price.value()) * 100.0;
+                let profit_pct = ((trade.entry_price.value() - current_price.value())
+                    / trade.entry_price.value())
+                    * 100.0;
                 if profit_pct > take_profit_pct {
                     return Some(ExitReason::TakeProfit);
                 }
@@ -388,11 +402,9 @@ impl Backtester {
             self.config.default_position_size_pct
         };
 
-        let position_value = capital * (base_size_pct / 100.0);
-
         // Assume we're using the mid price (simplified)
         // In reality, we'd use the actual execution price
-        position_value
+        capital * (base_size_pct / 100.0)
     }
 
     /// Run backtest with pre-generated signals (for Python integration)
@@ -428,8 +440,7 @@ impl Backtester {
                 };
 
                 let exit_commission = self.config.commission_per_trade;
-                let exit_slippage =
-                    (exit_price.value() - trade.entry_price.value()).abs() * 0.01;
+                let exit_slippage = (exit_price.value() - trade.entry_price.value()).abs() * 0.01;
 
                 trade.close(
                     exit_price,
@@ -483,7 +494,10 @@ impl Backtester {
                 capital,
             );
 
-            if !matches!(risk_check, crate::core::risk_manager::RiskCheckResult::Approved) {
+            if !matches!(
+                risk_check,
+                crate::core::risk_manager::RiskCheckResult::Approved
+            ) {
                 rejected_signals += 1;
                 continue;
             }
@@ -525,16 +539,16 @@ impl Backtester {
 
             // Update equity curve
             let open_positions_value: f64 = open_trades
-                .iter()
-                .map(|(_, trade)| entry_price.value() * trade.quantity.value() as f64)
+                .values()
+                .map(|trade| entry_price.value() * trade.quantity.value() as f64)
                 .sum();
 
             equity_curve.push(capital + open_positions_value);
         }
 
         // Close all remaining positions at last signal price
-        let final_time = SystemTime::UNIX_EPOCH +
-            Duration::from_secs((signals.len() as u64) * 86400);
+        let final_time =
+            SystemTime::UNIX_EPOCH + Duration::from_secs((signals.len() as u64) * 86400);
 
         for (_, mut trade) in open_trades.into_iter() {
             // Use the trade's entry price as exit (simplified)

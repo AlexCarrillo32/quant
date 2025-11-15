@@ -36,7 +36,7 @@
 //! - Increases size during winning streaks (maximizes gains)
 //! - Accounts for win rate AND win/loss ratio
 
-use crate::types::{Confidence, Price, Quantity};
+use crate::types::{Confidence, Price};
 use serde::{Deserialize, Serialize};
 
 /// Kelly Criterion configuration
@@ -64,12 +64,12 @@ pub struct KellyConfig {
 impl Default for KellyConfig {
     fn default() -> Self {
         KellyConfig {
-            kelly_fraction: 0.5,         // Half Kelly (conservative)
-            min_win_rate: 0.40,          // Need at least 40% win rate
-            max_position_pct: 10.0,      // Never more than 10% per position
-            min_position_pct: 0.5,       // Never less than 0.5%
-            min_trades_for_kelly: 20,    // Need 20 trades minimum for stats
-            default_position_pct: 2.0,   // Use 2% until we have history
+            kelly_fraction: 0.5,       // Half Kelly (conservative)
+            min_win_rate: 0.40,        // Need at least 40% win rate
+            max_position_pct: 10.0,    // Never more than 10% per position
+            min_position_pct: 0.5,     // Never less than 0.5%
+            min_trades_for_kelly: 20,  // Need 20 trades minimum for stats
+            default_position_pct: 2.0, // Use 2% until we have history
         }
     }
 }

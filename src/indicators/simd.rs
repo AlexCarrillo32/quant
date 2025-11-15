@@ -42,6 +42,7 @@
 ///
 /// # Example
 /// ```
+/// use quant_engine::indicators::sma_simd;
 /// let prices = vec![10.0, 11.0, 12.0, 13.0, 14.0];
 /// let sma = sma_simd(&prices, 3);
 /// // sma[2] = (10 + 11 + 12) / 3 = 11.0
@@ -83,6 +84,7 @@ pub fn sma_simd(prices: &[f64], period: usize) -> Vec<f64> {
 ///
 /// # Example
 /// ```
+/// use quant_engine::indicators::ema_simd;
 /// let prices = vec![10.0, 11.0, 12.0, 13.0, 14.0];
 /// let ema = ema_simd(&prices, 3);
 /// ```
@@ -130,6 +132,7 @@ pub fn ema_simd(prices: &[f64], period: usize) -> Vec<f64> {
 ///
 /// # Example
 /// ```
+/// use quant_engine::indicators::rsi_simd;
 /// let prices = vec![44.0, 44.3, 44.1, 43.6, 44.3, 44.8, 45.1];
 /// let rsi = rsi_simd(&prices, 14);
 /// ```
@@ -201,7 +204,8 @@ pub fn rsi_simd(prices: &[f64], period: usize) -> Vec<f64> {
 ///
 /// # Example
 /// ```
-/// let prices = vec![/* price data */];
+/// use quant_engine::indicators::macd_simd;
+/// let prices: Vec<f64> = (0..50).map(|x| 100.0 + x as f64 * 0.5).collect();
 /// let (macd, signal, histogram) = macd_simd(&prices, 12, 26, 9);
 /// ```
 pub fn macd_simd(
@@ -252,8 +256,9 @@ pub fn macd_simd(
 ///
 /// # Example
 /// ```
-/// let prices = vec![/* price data */];
-/// let (middle, upper, lower) = bollinger_bands_simd(&prices, 20, 2.0);
+/// use quant_engine::indicators::bollinger_bands_simd;
+/// let prices = vec![10.0, 11.0, 12.0, 11.5, 12.5, 13.0, 12.0, 11.0];
+/// let (middle, upper, lower) = bollinger_bands_simd(&prices, 3, 2.0);
 /// ```
 pub fn bollinger_bands_simd(
     prices: &[f64],
@@ -308,10 +313,11 @@ pub fn bollinger_bands_simd(
 ///
 /// # Example
 /// ```
-/// let highs = vec![/* high prices */];
-/// let lows = vec![/* low prices */];
-/// let closes = vec![/* close prices */];
-/// let atr = atr_simd(&highs, &lows, &closes, 14);
+/// use quant_engine::indicators::atr_simd;
+/// let highs = vec![10.5, 11.0, 12.0, 11.5, 12.5];
+/// let lows = vec![10.0, 10.5, 11.0, 11.0, 11.5];
+/// let closes = vec![10.3, 10.8, 11.5, 11.2, 12.0];
+/// let atr = atr_simd(&highs, &lows, &closes, 3);
 /// ```
 pub fn atr_simd(highs: &[f64], lows: &[f64], closes: &[f64], period: usize) -> Vec<f64> {
     if highs.len() != lows.len() || highs.len() != closes.len() || highs.len() < period + 1 {

@@ -57,7 +57,7 @@ impl<'a> BacktestReport<'a> {
             "  Strategy Grade:       {:>10}\n",
             self.result.metrics.grade()
         ));
-        report.push_str("\n");
+        report.push('\n');
 
         // Trade Statistics
         let stats = &self.result.metrics.trade_stats;
@@ -87,7 +87,7 @@ impl<'a> BacktestReport<'a> {
             "  Expectancy:           {:>10.2}\n",
             stats.expectancy
         ));
-        report.push_str("\n");
+        report.push('\n');
 
         // Win/Loss Analysis
         report.push_str("WIN/LOSS ANALYSIS\n");
@@ -116,7 +116,7 @@ impl<'a> BacktestReport<'a> {
             "  Avg Hold Time:        {:>10.2}h\n",
             stats.avg_hold_time_hours
         ));
-        report.push_str("\n");
+        report.push('\n');
 
         // Streaks
         report.push_str("STREAKS\n");
@@ -129,7 +129,7 @@ impl<'a> BacktestReport<'a> {
             "  Max Consecutive Losses:{:>9}\n",
             stats.max_consecutive_losses
         ));
-        report.push_str("\n");
+        report.push('\n');
 
         // Signal Analysis
         report.push_str("SIGNAL ANALYSIS\n");
@@ -153,7 +153,7 @@ impl<'a> BacktestReport<'a> {
             "  Acceptance Rate:      {:>10.2}%\n",
             acceptance_rate
         ));
-        report.push_str("\n");
+        report.push('\n');
 
         // Capital Evolution
         report.push_str("CAPITAL EVOLUTION\n");
@@ -168,7 +168,7 @@ impl<'a> BacktestReport<'a> {
             "  Profit/Loss:          ${:>9.2}\n",
             self.result.final_capital - initial
         ));
-        report.push_str("\n");
+        report.push('\n');
 
         // Top Trades
         if !self.result.trades.is_empty() {
@@ -206,7 +206,7 @@ impl<'a> BacktestReport<'a> {
                     trade.net_pnl.unwrap_or(0.0)
                 ));
             }
-            report.push_str("\n");
+            report.push('\n');
 
             report.push_str("TOP 5 LOSING TRADES\n");
             report.push_str("───────────────────────────────────────────────────────────────\n");
@@ -242,7 +242,7 @@ impl<'a> BacktestReport<'a> {
                     trade.net_pnl.unwrap_or(0.0)
                 ));
             }
-            report.push_str("\n");
+            report.push('\n');
         }
 
         // Recommendation
@@ -271,7 +271,7 @@ impl<'a> BacktestReport<'a> {
             }
         }
 
-        report.push_str("\n");
+        report.push('\n');
         report.push_str("═══════════════════════════════════════════════════════════════\n");
 
         report

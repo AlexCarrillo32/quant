@@ -106,9 +106,9 @@ pub struct StructuralInefficiencyAlpha {
     events: HashMap<Symbol, Vec<EventTracker>>,
 
     // Configuration
-    days_before_event: i64,  // How many days before to enter (default: 3)
-    days_after_event: i64,   // How many days after to hold (default: 2)
-    min_confidence: f64,     // Minimum confidence to trade (default: 0.65)
+    days_before_event: i64, // How many days before to enter (default: 3)
+    days_after_event: i64,  // How many days after to hold (default: 2)
+    min_confidence: f64,    // Minimum confidence to trade (default: 0.65)
 
     // State
     stats: AlphaStats,
@@ -146,7 +146,7 @@ impl StructuralInefficiencyAlpha {
         confidence: f64,
     ) {
         let tracker = EventTracker::new(event_type, event_date, impact, confidence);
-        self.events.entry(symbol).or_insert_with(Vec::new).push(tracker);
+        self.events.entry(symbol).or_default().push(tracker);
     }
 
     /// Detect if it's options expiry week (3rd Friday of month)
@@ -191,7 +191,8 @@ impl StructuralInefficiencyAlpha {
         }
     }
 
-    /// Calculate confidence based on event characteristics
+    /// Calculate confidence based on event characteristics (for future enhancement)
+    #[allow(dead_code)]
     fn calculate_confidence(&self, tracker: &EventTracker, _data: &MarketData) -> f64 {
         let mut confidence = tracker.confidence; // Base confidence from event
 

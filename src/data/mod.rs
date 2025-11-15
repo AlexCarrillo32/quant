@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 pub mod cache;
 pub mod yahoo;
 
-pub use cache::{CachedDataProvider, CacheConfig, CacheStats};
+pub use cache::{CacheConfig, CacheStats, CachedDataProvider};
 pub use yahoo::YahooFinanceProvider;
 
 /// Market data provider trait

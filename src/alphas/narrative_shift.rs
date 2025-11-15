@@ -128,19 +128,23 @@ impl NarrativeTracker {
         let recent_count = (self.history.len() / 3).max(1);
         let older_count = recent_count;
 
-        let recent_avg = self.history
+        let recent_avg = self
+            .history
             .iter()
             .rev()
             .take(recent_count)
             .map(|(_, score)| score)
-            .sum::<f64>() / recent_count as f64;
+            .sum::<f64>()
+            / recent_count as f64;
 
-        let older_avg = self.history
+        let older_avg = self
+            .history
             .iter()
             .skip(self.history.len() - older_count - recent_count)
             .take(older_count)
             .map(|(_, score)| score)
-            .sum::<f64>() / older_count as f64;
+            .sum::<f64>()
+            / older_count as f64;
 
         (recent_avg - older_avg).abs() > threshold
     }
@@ -154,19 +158,23 @@ impl NarrativeTracker {
         let recent_count = (self.history.len() / 3).max(1);
         let older_count = recent_count;
 
-        let recent_avg = self.history
+        let recent_avg = self
+            .history
             .iter()
             .rev()
             .take(recent_count)
             .map(|(_, score)| score)
-            .sum::<f64>() / recent_count as f64;
+            .sum::<f64>()
+            / recent_count as f64;
 
-        let older_avg = self.history
+        let older_avg = self
+            .history
             .iter()
             .skip(self.history.len() - older_count - recent_count)
             .take(older_count)
             .map(|(_, score)| score)
-            .sum::<f64>() / older_count as f64;
+            .sum::<f64>()
+            / older_count as f64;
 
         Some(NarrativeSentiment::from_score(recent_avg - older_avg))
     }
@@ -220,12 +228,7 @@ impl NarrativeShiftAlpha {
     }
 
     /// Update a specific narrative with new data
-    pub fn update_narrative(
-        &mut self,
-        narrative_type: NarrativeType,
-        score: f64,
-        confidence: f64,
-    ) {
+    pub fn update_narrative(&mut self, narrative_type: NarrativeType, score: f64, confidence: f64) {
         if let Some(tracker) = self.narratives.get_mut(&narrative_type) {
             tracker.update(score, confidence);
         }
@@ -580,8 +583,17 @@ mod tests {
         assert_eq!(NarrativeSentiment::Neutral.to_score(), 0.0);
         assert_eq!(NarrativeSentiment::Bearish.to_score(), -1.0);
 
-        assert_eq!(NarrativeSentiment::from_score(0.8), NarrativeSentiment::Bullish);
-        assert_eq!(NarrativeSentiment::from_score(-0.8), NarrativeSentiment::Bearish);
-        assert_eq!(NarrativeSentiment::from_score(0.1), NarrativeSentiment::Neutral);
+        assert_eq!(
+            NarrativeSentiment::from_score(0.8),
+            NarrativeSentiment::Bullish
+        );
+        assert_eq!(
+            NarrativeSentiment::from_score(-0.8),
+            NarrativeSentiment::Bearish
+        );
+        assert_eq!(
+            NarrativeSentiment::from_score(0.1),
+            NarrativeSentiment::Neutral
+        );
     }
 }

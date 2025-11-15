@@ -304,7 +304,7 @@ impl RiskManager {
         open_positions: &HashMap<Symbol, f64>,
     ) -> Option<RiskViolation> {
         // Find which correlation group this symbol belongs to
-        for (_group_name, symbols) in &self.correlation_groups {
+        for symbols in self.correlation_groups.values() {
             if symbols.contains(new_symbol) {
                 // Calculate total exposure in this correlation group
                 let mut group_exposure = new_position_value;

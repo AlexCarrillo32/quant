@@ -338,11 +338,8 @@ fn calculate_sortino_ratio(returns: &[f64], risk_free_rate: f64) -> f64 {
         return f64::INFINITY; // No downside = infinite Sortino
     }
 
-    let downside_variance = downside_returns
-        .iter()
-        .map(|r| r.powi(2))
-        .sum::<f64>()
-        / downside_returns.len() as f64;
+    let downside_variance =
+        downside_returns.iter().map(|r| r.powi(2)).sum::<f64>() / downside_returns.len() as f64;
     let downside_dev = downside_variance.sqrt();
 
     if downside_dev.abs() < 1e-10 {
@@ -438,11 +435,11 @@ mod tests {
     #[test]
     fn test_trade_statistics() {
         let trades = vec![
-            create_test_trade(10.0),  // win
-            create_test_trade(-5.0),  // loss
-            create_test_trade(15.0),  // win
-            create_test_trade(-3.0),  // loss
-            create_test_trade(20.0),  // win
+            create_test_trade(10.0), // win
+            create_test_trade(-5.0), // loss
+            create_test_trade(15.0), // win
+            create_test_trade(-3.0), // loss
+            create_test_trade(20.0), // win
         ];
 
         let stats = TradeStatistics::calculate(&trades);

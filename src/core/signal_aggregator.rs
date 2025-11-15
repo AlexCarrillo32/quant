@@ -54,7 +54,7 @@ impl SignalAggregator {
         for signal in signals {
             by_symbol
                 .entry(signal.symbol.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(signal);
         }
 
@@ -99,10 +99,7 @@ impl SignalAggregator {
         let mut by_action: HashMap<SignalAction, Vec<Signal>> = HashMap::new();
 
         for signal in signals {
-            by_action
-                .entry(signal.action)
-                .or_insert_with(Vec::new)
-                .push(signal);
+            by_action.entry(signal.action).or_default().push(signal);
         }
 
         // Find action with highest average confidence
@@ -115,15 +112,15 @@ impl SignalAggregator {
                 .sum::<f64>()
                 / action_signals.len() as f64;
 
-            if avg_confidence >= self.min_confidence {
-                if best.is_none() || avg_confidence > best.as_ref().unwrap().1 {
-                    best = Some((action, avg_confidence, action_signals));
-                }
+            if avg_confidence >= self.min_confidence
+                && (best.is_none() || avg_confidence > best.as_ref().unwrap().1)
+            {
+                best = Some((action, avg_confidence, action_signals));
             }
         }
 
         // Create aggregated signal
-        best.map(|(action, avg_confidence, action_signals)| {
+        best.map(|(_action, avg_confidence, action_signals)| {
             let mut base_signal = action_signals[0].clone();
             base_signal.confidence = Confidence::new(avg_confidence).unwrap();
             base_signal.reason = format!(
@@ -174,10 +171,7 @@ impl SignalAggregator {
         let mut votes: HashMap<SignalAction, Vec<Signal>> = HashMap::new();
 
         for signal in signals {
-            votes
-                .entry(signal.action)
-                .or_insert_with(Vec::new)
-                .push(signal);
+            votes.entry(signal.action).or_default().push(signal);
         }
 
         // Find action with most votes
@@ -185,7 +179,7 @@ impl SignalAggregator {
             .into_iter()
             .max_by_key(|(_, action_signals)| action_signals.len());
 
-        majority.and_then(|(action, action_signals)| {
+        majority.and_then(|(_action, action_signals)| {
             let total_signals = action_signals.len();
             let avg_confidence = action_signals
                 .iter()

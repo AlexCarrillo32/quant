@@ -13,6 +13,7 @@ use yahoo_finance_api as yahoo;
 /// Yahoo Finance data provider
 pub struct YahooFinanceProvider {
     provider: yahoo::YahooConnector,
+    #[allow(dead_code)] // For future rate limiting/retry logic
     config: DataProviderConfig,
 }
 
@@ -59,8 +60,7 @@ impl YahooFinanceProvider {
             ask: Price::new(yahoo_quote.close * 1.001)?, // Approximate ask
             bid_size: Quantity::buy(1000),               // Yahoo doesn't provide
             ask_size: Quantity::sell(1000),              // Yahoo doesn't provide
-            timestamp: DateTime::from_timestamp(yahoo_quote.timestamp as i64, 0)
-                .unwrap_or_else(Utc::now),
+            timestamp: DateTime::from_timestamp(yahoo_quote.timestamp, 0).unwrap_or_else(Utc::now),
         };
 
         // Build market data
@@ -69,8 +69,7 @@ impl YahooFinanceProvider {
             quote,
             last_price: Price::new(yahoo_quote.close)?,
             volume: yahoo_quote.volume,
-            timestamp: DateTime::from_timestamp(yahoo_quote.timestamp as i64, 0)
-                .unwrap_or_else(Utc::now),
+            timestamp: DateTime::from_timestamp(yahoo_quote.timestamp, 0).unwrap_or_else(Utc::now),
             open: Some(Price::new(yahoo_quote.open)?),
             high: Some(Price::new(yahoo_quote.high)?),
             low: Some(Price::new(yahoo_quote.low)?),
